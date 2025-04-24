@@ -1,0 +1,1 @@
+/usr/bin/g++ -g CMakeFiles/Learning2.dir/src/main.cpp.o CMakeFiles/Learning2.dir/src/glad.c.o -o Learning2  include/glfw/src/libglfw3.a /usr/lib/x86_64-linux-gnu/libGL.so /usr/lib/x86_64-linux-gnu/librt.a -lm -ldl 

@@ -16,10 +16,18 @@ target_include_directories(Learning2 PRIVATE
     ${PROJECT_SOURCE_DIR}/include
 )
 
-# Link with glfw and system OpenGL
-target_link_libraries(Learning2 PRIVATE
-    glfw
-    opengl32         # Windows
-)
+# Link with glfw and system OpenGL  
+if(WIN32)
+    target_link_libraries(Learning2 PRIVATE
+        glfw
+        opengl32         # Windows
+    )   
+elseif(UNIX)
+    find_package(OpenGL REQUIRED)
+    target_link_libraries(Learning2 PRIVATE
+        glfw
+        OpenGL::GL      # UNIX
+    ) 
+endif()
 
 # On Linux, CMake will automatically use OpenGL::GL instead via find_package
