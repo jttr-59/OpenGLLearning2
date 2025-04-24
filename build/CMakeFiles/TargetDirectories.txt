@@ -1,0 +1,11 @@
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/CMakeFiles/Learning2.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/CMakeFiles/INSTALL.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/CMakeFiles/ZERO_CHECK.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/include/glfw/CMakeFiles/uninstall.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/include/glfw/CMakeFiles/INSTALL.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/include/glfw/CMakeFiles/ALL_BUILD.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/include/glfw/src/CMakeFiles/glfw.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/include/glfw/src/CMakeFiles/update_mappings.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/include/glfw/src/CMakeFiles/INSTALL.dir
+C:/Users/JT/Desktop/OpenGL/OpenGLLearning2/build/include/glfw/docs/CMakeFiles/INSTALL.dir

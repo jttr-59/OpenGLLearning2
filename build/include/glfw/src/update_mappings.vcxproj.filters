@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\JT\Desktop\OpenGL\OpenGLLearning2\build\CMakeFiles\fc421fe68b8935b1c2e0b14756d55a1f\update_mappings.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\JT\Desktop\OpenGL\OpenGLLearning2\include\glfw\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\JT\Desktop\OpenGL\OpenGLLearning2\include\glfw\src\mappings.h.in">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="C:\Users\JT\Desktop\OpenGL\OpenGLLearning2\include\glfw\CMake\GenerateMappings.cmake" />
+    <None Include="C:\Users\JT\Desktop\OpenGL\OpenGLLearning2\build\include\glfw\src\CMakeFiles\update_mappings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{91801D8A-2AE0-3BF5-8E26-11D591E0B58E}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{BE264F80-831E-300A-8BAC-2326AEE366F3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

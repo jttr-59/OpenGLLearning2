@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.10)
+project(Learning2 VERSION 1.0)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Add GLFW as a CMake subproject
+add_subdirectory(include/glfw)
+
+add_executable(Learning2
+    src/main.cpp
+    src/glad.c
+)
+
+target_include_directories(Learning2 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+# Link with glfw and system OpenGL
+target_link_libraries(Learning2 PRIVATE
+    glfw
+    opengl32         # Windows
+)
+
+# On Linux, CMake will automatically use OpenGL::GL instead via find_package
