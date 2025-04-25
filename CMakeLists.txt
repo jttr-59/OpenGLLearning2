@@ -40,13 +40,3 @@ elseif(UNIX)
         OpenGL::GL      # UNIX
     ) 
 endif()
-
-# On Linux, CMake will automatically use OpenGL::GL instead via find_package
-
-# Run this command on linux
-# mkdir build-linux && cd build-linux
-# cmake .. && cmake --build .
-
-# Run this command on windows
-# mkdir build-windows && cd build-windows
-# cmake .. && cmake --build .
