@@ -16,12 +16,23 @@ target_include_directories(Learning2 PRIVATE
     ${PROJECT_SOURCE_DIR}/include
 )
 
+# Set output paths based on build directory
+
 # Link with glfw and system OpenGL  
 if(WIN32)
     target_link_libraries(Learning2 PRIVATE
         glfw
         opengl32         # Windows
     )   
+elseif(APPLE)
+    # macOS specifics if you ever go that route
+    find_library(COCOA_LIBRARY Cocoa)
+    find_library(OpenGL_LIBRARY OpenGL)
+    target_link_libraries(Learning2 PRIVATE
+        glfw
+        ${OpenGL_LIBRARY}
+        ${COCOA_LIBRARY}
+    )
 elseif(UNIX)
     find_package(OpenGL REQUIRED)
     target_link_libraries(Learning2 PRIVATE
@@ -31,3 +42,11 @@ elseif(UNIX)
 endif()
 
 # On Linux, CMake will automatically use OpenGL::GL instead via find_package
+
+# Run this command on linux
+# mkdir build-linux && cd build-linux
+# cmake .. && cmake --build .
+
+# Run this command on windows
+# mkdir build-windows && cd build-windows
+# cmake .. && cmake --build .
