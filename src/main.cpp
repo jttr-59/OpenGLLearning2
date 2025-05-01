@@ -31,13 +31,22 @@ int main()
 {
     //grab shader files as strings
     std::string fragmentStr, vertexStr;
-try {
-    vertexStr   = fileToString("../shaders/vertexShader.glsl");
-    fragmentStr = fileToString("../shaders/fragmentShader.glsl");
-} catch (const std::exception& e) {
-    std::cerr << "Shader load error: " << e.what() << std::endl;
-    return -1;
-}
+    try {
+        #ifdef _WIN32
+            vertexStr   = fileToString("../shaders/vertexShader.glsl");
+            fragmentStr = fileToString("../shaders/fragmentShader.glsl");
+        #elif defined(__APPLE__) || defined(__unix__)
+            vertexStr   = fileToString("./shaders/vertexShader.glsl");
+            fragmentStr = fileToString("./shaders/fragmentShader.glsl");
+        #else
+            #error "Unsupported platform"
+        #endif
+    } catch (const std::exception& e) {
+        std::cerr << "Shader load error: " << e.what() << std::endl;
+        std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
+
+        return -1;
+    }
 
     const char *fragmentShaderSource = fragmentStr.c_str();
     const char *vertexShaderSource = vertexStr.c_str();

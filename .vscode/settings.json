@@ -63,6 +63,16 @@
         "chrono": "cpp",
         "filesystem": "cpp",
         "forward_list": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "array": "cpp",
+        "codecvt": "cpp",
+        "cwctype": "cpp",
+        "deque": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "random": "cpp",
+        "string_view": "cpp",
+        "numbers": "cpp",
+        "cinttypes": "cpp"
     }
 }
