@@ -40,3 +40,5 @@ elseif(UNIX)
         OpenGL::GL      # UNIX
     ) 
 endif()
+
+file(COPY ${CMAKE_SOURCE_DIR}/src/shaders DESTINATION ${CMAKE_BINARY_DIR})

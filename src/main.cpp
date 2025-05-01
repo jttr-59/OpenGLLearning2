@@ -1,6 +1,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+//stuff for file and string management
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <filesystem>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -9,21 +14,36 @@ void processInput(GLFWwindow *window);
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const char *vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-    "}\0";
-const char *fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-    "}\n\0";
+std::string fileToString(std::string filepath) {
+    std::ifstream file;
+    file.open(filepath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file: " + filepath);
+    }
+
+    std::ostringstream str;
+
+    str << file.rdbuf();
+    return str.str();
+}
 
 int main()
 {
+    //grab shader files as strings
+    std::string fragmentStr, vertexStr;
+try {
+    vertexStr   = fileToString("../shaders/vertexShader.glsl");
+    fragmentStr = fileToString("../shaders/fragmentShader.glsl");
+} catch (const std::exception& e) {
+    std::cerr << "Shader load error: " << e.what() << std::endl;
+    return -1;
+}
+
+    const char *fragmentShaderSource = fragmentStr.c_str();
+    const char *vertexShaderSource = vertexStr.c_str();
+
+
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
@@ -71,6 +91,7 @@ int main()
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
+
     // fragment shader
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
@@ -82,6 +103,7 @@ int main()
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
+
     // link shaders
     unsigned int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
