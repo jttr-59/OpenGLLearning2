@@ -41,4 +41,20 @@ elseif(UNIX)
     ) 
 endif()
 
-file(COPY ${CMAKE_SOURCE_DIR}/src/shaders DESTINATION ${CMAKE_BINARY_DIR})
+#file(COPY ${CMAKE_SOURCE_DIR}/src/shaders DESTINATION ${CMAKE_BINARY_DIR})
+
+file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
+
+add_custom_target(copy_shaders ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/shaders
+)
+
+foreach(SHADER_FILE ${SHADER_FILES})
+    get_filename_component(SHADER_NAME ${SHADER_FILE} NAME)
+    add_custom_command(
+        TARGET copy_shaders POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${SHADER_FILE}
+                ${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}
+    )
+endforeach()
