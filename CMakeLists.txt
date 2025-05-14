@@ -10,10 +10,12 @@ add_subdirectory(include/glfw)
 add_executable(Learning2
     src/main.cpp
     src/glad.c
+    src/stb_image.cpp
 )
 
 target_include_directories(Learning2 PRIVATE
     ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
 )
 
 # Set output paths based on build directory
@@ -45,6 +47,7 @@ endif()
 
 file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
 
+#slightly more convoluted way of copying the shader files whenever the project is built
 add_custom_target(copy_shaders ALL
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/shaders
 )
@@ -56,5 +59,22 @@ foreach(SHADER_FILE ${SHADER_FILES})
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${SHADER_FILE}
                 ${CMAKE_BINARY_DIR}/shaders/${SHADER_NAME}
+    )
+endforeach()
+
+file(GLOB TEXTURE_FILES "${CMAKE_SOURCE_DIR}/textures/*")
+
+#slightly more convoluted way of copying the shader files whenever the project is built
+add_custom_target(copy_textures ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/textures
+)
+
+foreach(TEXTURE_FILE ${TEXTURE_FILES})
+    get_filename_component(TEXTURE_NAME ${TEXTURE_FILE} NAME)
+    add_custom_command(
+        TARGET copy_textures POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${TEXTURE_FILE}
+                ${CMAKE_BINARY_DIR}/textures/${TEXTURE_NAME}
     )
 endforeach()
