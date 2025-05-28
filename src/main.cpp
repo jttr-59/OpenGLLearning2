@@ -8,6 +8,10 @@
 #include <filesystem>
 #include <cmath>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include "shader.h"
 #include "stb_image.h"
 
@@ -22,6 +26,8 @@ std::string vertexShaderPath;
 std::string fragmentShaderPath;
 
 std::string crateTexturePath;
+std::string awesomeFaceTexturePath;
+
 
 int main()
 {
@@ -30,11 +36,13 @@ int main()
     fragmentShaderPath = "../shaders/fragmentShader.glsl";
 
     crateTexturePath = "../textures/container.jpg";
+    awesomeFaceTexturePath = "../textures/awesomeface.png";
 #elif defined(__APPLE__) || defined(__unix__)
     vertexShaderPath = "./shaders/vertexShader.glsl";
     fragmentShaderPath = "./shaders/fragmentShader.glsl";
 
     crateTexturePath = "./textures/container.jpg";
+    awesomeFaceTexturePath = "./textures/awesomeface.png";
 #else
 #error "Unsupported platform"
 #endif
@@ -128,7 +136,7 @@ int main()
     glGenTextures(1, &texture2);
     glBindTexture(GL_TEXTURE_2D, texture2);
 
-    data = stbi_load(crateTexturePath.c_str(), &width, &height, &nrChannels, 0);
+    data = stbi_load(awesomeFaceTexturePath.c_str(), &width, &height, &nrChannels, 0);
     
     if (data)
     {
@@ -139,6 +147,11 @@ int main()
     {
         std::cerr << "Failed To Load Texture From Image" << std::endl;
     }
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, texture2);
 
     // free up the storage used creating the image string
     stbi_image_free(data);
@@ -183,11 +196,21 @@ int main()
 
     // render loop
     // -----------
+    basicShader.use();
+    basicShader.setInt("texture2", 1);
+     
     while (!glfwWindowShouldClose(window))
     {
         // input
         // -----
         processInput(window);
+
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5, -0.5f, 0.0));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
+
+        unsigned int transformLoc = glGetUniformLocation(basicShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
         // render
         // ------
@@ -195,15 +218,8 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         // draw our first triangle
-        basicShader.use();
         glUniform1f(glGetUniformLocation(basicShader.ID, "texture1"), 0);
         glUniform1f(glGetUniformLocation(basicShader.ID, "texture2"), 1);
-
-        // add the textures;
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
 
         glBindVertexArray(VAO);
 
