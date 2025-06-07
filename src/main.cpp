@@ -36,8 +36,8 @@ flyCamera basicFlyCamera(glm::vec3(0.0f, 0.0f, 3.0f));
 Shader* basicShader = nullptr;
 
 //
-glm::vec3 shipPos;
-float shipRot;
+glm::vec3 shipPos(0.0f, 0.0f, 0.0f);
+glm::vec3 shipRot(0.0f, 0.0f, 0.0f);
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow * window, double xoffset, double yoffset);
@@ -275,6 +275,9 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
+    shipPos = glm::vec3(0.0f, 0.0f, 0.0f);
+    shipRot = glm::vec3(0.0f, 0.0f, 0.0f);
+
     while (!glfwWindowShouldClose(window))
     {
         processInput(window);
@@ -325,7 +328,9 @@ int main()
         }
         */
 
-        drawSpaceship(shipPos, glm::vec3(shipRot, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+        drawSpaceship(shipPos, shipRot, glm::vec3(1.0f, 1.0f, 1.0f));
+
+        shipRot.z = 45.0f * glm::sin(glfwGetTime() / 2);
         // glBindVertexArray(0); // no need to unbind it every time
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -402,6 +407,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 }
 
 void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
+
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, position);
     model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
@@ -409,24 +415,31 @@ void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
     model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::scale(model, scale);
 
-    //model = (position - shipPos) * glm::mat2();
-
     basicShader->setMat4("model", model);
 
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
 void drawSpaceship(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
-    //modelDraw(position + glm::vec3(0.0f, 0.0f, 0.0f), rotation + glm::vec3(0.0f, 0.0f, 0.0f), scale + glm::vec3(0.0f, 0.0f, 0.0f));
+    glm::mat4 ship = glm::mat4(1.0f);
+    //modelDraw(position + glm::vec3(0.0f, 0.0f, 0.0f), rotation + glm::vec3(0.0f, 0.0f, 0.0f), scale + glm::vec3(1.0f, 1.0f, 1.0f));
     basicShader->setFloat("textureSet", 0.0f);
-    modelDraw(position, rotation, scale + glm::vec3(-0.3f, -0.5f, 0.3f));
-    modelDraw(position + glm::vec3(0.0f, 0.0f, -0.6f), rotation + glm::vec3(0.0f, 45.0f, 0.0f), scale + glm::vec3(-0.2f, -0.7f, -0.2f));
+    modelDraw(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.7f, 0.5f, 1.3f));
+    modelDraw(glm::vec3(0.0f, 0.0f, -0.6f), glm::vec3(0.0f, 45.0f, 0.0f), glm::vec3(0.8f, 0.3f, 0.8f));
     //wings
-    modelDraw(position + glm::vec3(0.3f, -0.1f, 0.0f), rotation + glm::vec3(0.0f, 20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
-    modelDraw(position + glm::vec3(-0.3f,-0.1f, 0.0f), rotation + glm::vec3(0.0f, -20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
+    modelDraw(glm::vec3(0.3f, -0.1f, 0.0f), glm::vec3(0.0f, 20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
+    modelDraw(glm::vec3(-0.3f,-0.1f, 0.0f), glm::vec3(0.0f, -20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
 
     //thrusters
-    modelDraw(position + glm::vec3(0.2f, 0.0f, 0.7f), rotation + glm::vec3(0.0f, 0.0f, 45.0f), scale * 0.3f);
-    modelDraw(position + glm::vec3(-0.2f, 0.0f, 0.7f), rotation + glm::vec3(0.0f, 0.0f, 45.0f), scale * 0.3f);
+    modelDraw(glm::vec3(0.2f, 0.0f, 0.7f), glm::vec3(0.0f, 0.0f, 45.0f), glm::vec3(0.3f, 0.3f, 0.3f));
+    modelDraw(glm::vec3(-0.2f, 0.0f, 0.7f), glm::vec3(0.0f, 0.0f, 45.0f), glm::vec3(0.3f, 0.3f, 0.3f));
+
+    ship = glm::translate(ship, position);
+    ship = glm::rotate(ship, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    ship = glm::rotate(ship, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    ship = glm::rotate(ship, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    ship = glm::scale(ship, scale);
+
+    basicShader->setMat4("ship", ship);
 }
 
