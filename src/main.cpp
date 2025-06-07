@@ -15,9 +15,11 @@
 #include "shader.h"
 #include "stb_image.h"
 #include "flyCamera.h"
+#include "usefulMath.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
+void drawSpaceship(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -26,10 +28,16 @@ const unsigned int SCR_HEIGHT = 1080;
 std::string vertexShaderPath;
 std::string fragmentShaderPath;
 
-std::string crateTexturePath;
-std::string awesomeFaceTexturePath;
+std::string shipTexturePath;
+std::string astroidTexturePath;
 
 flyCamera basicFlyCamera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+Shader* basicShader = nullptr;
+
+//
+glm::vec3 shipPos;
+float shipRot;
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow * window, double xoffset, double yoffset);
@@ -107,8 +115,8 @@ int main()
     vertexShaderPath = "../shaders/vertexShader.glsl";
     fragmentShaderPath = "../shaders/fragmentShader.glsl";
 
-    crateTexturePath = "../textures/container.jpg";
-    awesomeFaceTexturePath = "../textures/awesomeface.png";
+    shipTexturePath = "../textures/ShipL.png";
+    astroidTexturePath = "../textures/awesomeface.png";
 #elif defined(__APPLE__) || defined(__unix__)
     vertexShaderPath = "./shaders/vertexShader.glsl";
     fragmentShaderPath = "./shaders/fragmentShader.glsl";
@@ -151,17 +159,19 @@ int main()
     }
 
     // create shader
-    Shader basicShader(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
-
-    glm::vec3 cubePositions[20];
+    basicShader = new Shader(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
 
     float texCoords[] = {0.0f, 0.0f, 1.0f, 0.0f, 0.5f, 1.0f};
 
+    
+    glm::vec3 cubePositions[1];
+    /*
     for (unsigned int i = 0; i < sizeof(cubePositions) / sizeof(cubePositions[0]); i++)
     {
 
         cubePositions[i] = glm::vec3((float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 8.0f, (float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 8.0f, (float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 8.0f);
     }
+    */
 
     // this just choses what to do when the texture overflows when drawing on a triangle
     // S and T respond to the X and Y axis of the texture
@@ -178,13 +188,13 @@ int main()
     glBindTexture(GL_TEXTURE_2D, texture1);
 
     int width, height, nrChannels;
-    unsigned char *data = stbi_load(crateTexturePath.c_str(), &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load(shipTexturePath.c_str(), &width, &height, &nrChannels, 0);
 
     stbi_set_flip_vertically_on_load(true);
 
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     else
@@ -198,7 +208,7 @@ int main()
     glGenTextures(1, &texture2);
     glBindTexture(GL_TEXTURE_2D, texture2);
 
-    data = stbi_load(awesomeFaceTexturePath.c_str(), &width, &height, &nrChannels, 0);
+    data = stbi_load(astroidTexturePath.c_str(), &width, &height, &nrChannels, 0);
 
     if (data)
     {
@@ -253,9 +263,9 @@ int main()
 
     // render loop
     // -----------
-    basicShader.use();
-    basicShader.setInt("texture1", 0);
-    basicShader.setInt("texture2", 1);
+    basicShader->use();
+    basicShader->setInt("texture1", 0);
+    basicShader->setInt("texture2", 1);
 
 
 
@@ -282,7 +292,7 @@ int main()
 
         // render
         // ------
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
@@ -296,10 +306,11 @@ int main()
 
         glm::mat4 view = basicFlyCamera.GetViewMatrix();
 
-        basicShader.setMat4("view", view);
-        basicShader.setMat4("projection", projection);
+        basicShader->setMat4("view", view);
+        basicShader->setMat4("projection", projection);
 
         glBindVertexArray(VAO);
+        /*
         // gl draw elements requires a indeci
         for (unsigned int i = 0; i < sizeof(cubePositions) / sizeof(cubePositions[0]); i++)
         {
@@ -308,10 +319,13 @@ int main()
             model = glm::translate(model, cubePositions[i]);
             model = glm::rotate(model, (float)(glm::pi<float>() * (float)sin((glfwGetTime() * 0.3) * 2 * glm::pi<float>())), glm::vec3(1.0f, 0.3f, 0.5f));
 
-            basicShader.setMat4("model", model);
+            basicShader->setMat4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+        */
+
+        drawSpaceship(shipPos, glm::vec3(shipRot, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
         // glBindVertexArray(0); // no need to unbind it every time
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -386,3 +400,33 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     basicFlyCamera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
+
+void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    model = glm::rotate(model, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
+    model = glm::rotate(model, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
+    model = glm::scale(model, scale);
+
+    //model = (position - shipPos) * glm::mat2();
+
+    basicShader->setMat4("model", model);
+
+    glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+void drawSpaceship(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
+    //modelDraw(position + glm::vec3(0.0f, 0.0f, 0.0f), rotation + glm::vec3(0.0f, 0.0f, 0.0f), scale + glm::vec3(0.0f, 0.0f, 0.0f));
+    basicShader->setFloat("textureSet", 0.0f);
+    modelDraw(position, rotation, scale + glm::vec3(-0.3f, -0.5f, 0.3f));
+    modelDraw(position + glm::vec3(0.0f, 0.0f, -0.6f), rotation + glm::vec3(0.0f, 45.0f, 0.0f), scale + glm::vec3(-0.2f, -0.7f, -0.2f));
+    //wings
+    modelDraw(position + glm::vec3(0.3f, -0.1f, 0.0f), rotation + glm::vec3(0.0f, 20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
+    modelDraw(position + glm::vec3(-0.3f,-0.1f, 0.0f), rotation + glm::vec3(0.0f, -20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
+
+    //thrusters
+    modelDraw(position + glm::vec3(0.2f, 0.0f, 0.7f), rotation + glm::vec3(0.0f, 0.0f, 45.0f), scale * 0.3f);
+    modelDraw(position + glm::vec3(-0.2f, 0.0f, 0.7f), rotation + glm::vec3(0.0f, 0.0f, 45.0f), scale * 0.3f);
+}
+
