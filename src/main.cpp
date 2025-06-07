@@ -20,6 +20,7 @@
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 void drawSpaceship(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 
 // settings
 const unsigned int SCR_WIDTH = 1920;
@@ -38,6 +39,7 @@ Shader* basicShader = nullptr;
 //
 glm::vec3 shipPos(0.0f, 0.0f, 0.0f);
 glm::vec3 shipRot(0.0f, 0.0f, 0.0f);
+float shipSpeed = 1.0f;
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow * window, double xoffset, double yoffset);
@@ -116,13 +118,13 @@ int main()
     fragmentShaderPath = "../shaders/fragmentShader.glsl";
 
     shipTexturePath = "../textures/ShipL.png";
-    astroidTexturePath = "../textures/awesomeface.png";
+    astroidTexturePath = "../textures/astroidL.png";
 #elif defined(__APPLE__) || defined(__unix__)
     vertexShaderPath = "./shaders/vertexShader.glsl";
     fragmentShaderPath = "./shaders/fragmentShader.glsl";
 
-    crateTexturePath = "./textures/container.jpg";
-    awesomeFaceTexturePath = "./textures/awesomeface.png";
+    crateTexturePath = "./textures/ShipL.png";
+    awesomeFaceTexturePath = "./textures/astroidL.png";
 #else
 #error "Unsupported platform"
 #endif
@@ -272,7 +274,7 @@ int main()
     glEnable(GL_DEPTH_TEST);
     // fps inputs
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetCursorPosCallback(window, mouse_callback);
+    //glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
     shipPos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -306,8 +308,11 @@ int main()
         // matrix for projection to screen
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(CAM_FOV), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        
+        glm::vec3 camPos = shipPos + glm::vec3(0.0f, 1.0f, 3.0f);
 
-        glm::mat4 view = basicFlyCamera.GetViewMatrix();
+        basicFlyCamera.Position = VecLerp(basicFlyCamera.Position, camPos, 0.99 * deltaTime);
+        glm::mat4 view = basicFlyCamera.GetLookAtMatrix(shipPos);
 
         basicShader->setMat4("view", view);
         basicShader->setMat4("projection", projection);
@@ -327,10 +332,14 @@ int main()
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
         */
+        glm::mat4 ship(1.0f);
+        basicShader->setMat4("ship", ship);
+        basicShader->setFloat("textureSet", 1.0f);
+        modelDraw(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
         drawSpaceship(shipPos, shipRot, glm::vec3(1.0f, 1.0f, 1.0f));
 
-        shipRot.z = 45.0f * glm::sin(glfwGetTime() / 2);
+        //shipRot.z = 45.0f * glm::sin(glfwGetTime() / 2);
         // glBindVertexArray(0); // no need to unbind it every time
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -359,13 +368,13 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        basicFlyCamera.ProcessKeyboard(FORWARD, deltaTime);
+        shipPos.y += shipSpeed * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        basicFlyCamera.ProcessKeyboard(BACKWARD, deltaTime);
+        shipPos.y -= shipSpeed * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        basicFlyCamera.ProcessKeyboard(LEFT, deltaTime);
+        shipPos.x -= shipSpeed * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        basicFlyCamera.ProcessKeyboard(RIGHT, deltaTime);
+        shipPos.x += shipSpeed * deltaTime;
 }
 
 
@@ -376,27 +385,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
-}
-
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-{
-    float xpos = static_cast<float>(xposIn);
-    float ypos = static_cast<float>(yposIn);
-
-    if (firstMouse)
-    {
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
-
-    lastX = xpos;
-    lastY = ypos;
-
-    basicFlyCamera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
@@ -421,9 +409,11 @@ void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
 }
 
 void drawSpaceship(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
-    glm::mat4 ship = glm::mat4(1.0f);
     //modelDraw(position + glm::vec3(0.0f, 0.0f, 0.0f), rotation + glm::vec3(0.0f, 0.0f, 0.0f), scale + glm::vec3(1.0f, 1.0f, 1.0f));
     basicShader->setFloat("textureSet", 0.0f);
+
+    glm::mat4 ship(1.0f);
+
     modelDraw(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.7f, 0.5f, 1.3f));
     modelDraw(glm::vec3(0.0f, 0.0f, -0.6f), glm::vec3(0.0f, 45.0f, 0.0f), glm::vec3(0.8f, 0.3f, 0.8f));
     //wings

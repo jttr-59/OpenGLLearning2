@@ -55,22 +55,9 @@ public:
         updateCameraVectors();
     }
 
-    glm::mat4 GetViewMatrix()
+    glm::mat4 GetLookAtMatrix(glm::vec3 lookAtLocation)
     {
-        return glm::lookAt(Position, Position + Front, Up);
-    }
-
-    void ProcessKeyboard(Camera_Movement direction, float deltaTime)
-    {
-        float velocity = MovementSpeed * deltaTime;
-        if (direction == FORWARD)
-            Position += Front * velocity;
-        if (direction == BACKWARD)
-            Position -= Front * velocity;
-        if (direction == LEFT)
-            Position -= Right * velocity;
-        if (direction == RIGHT)
-            Position += Right * velocity;
+        return glm::lookAt(Position, lookAtLocation, Up);
     }
 
     void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)

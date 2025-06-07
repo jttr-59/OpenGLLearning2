@@ -46,7 +46,6 @@ endif()
 #file(COPY ${CMAKE_SOURCE_DIR}/src/shaders DESTINATION ${CMAKE_BINARY_DIR})
 
 file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/src/shaders/*.glsl")
-file(GLOB TEXTURE_FILES "${CMAKE_SOURCE_DIR}/textures/")
 
 #slightly more convoluted way of copying the shader files whenever the project is built
 add_custom_target(copy_shaders ALL
