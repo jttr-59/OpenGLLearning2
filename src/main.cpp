@@ -14,13 +14,14 @@
 
 #include "shader.h"
 #include "stb_image.h"
+#include "flyCamera.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1920;
+const unsigned int SCR_HEIGHT = 1080;
 
 std::string vertexShaderPath;
 std::string fragmentShaderPath;
@@ -28,14 +29,10 @@ std::string fragmentShaderPath;
 std::string crateTexturePath;
 std::string awesomeFaceTexturePath;
 
-// camera properties
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+flyCamera basicFlyCamera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-float yaw = -90.0f;
-float pitch = 0.0f;
-float rotSpeed = 0.6f;
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void scroll_callback(GLFWwindow * window, double xoffset, double yoffset);
 
 // calculate delta time
 float deltaTime = 0.0f;
@@ -43,8 +40,7 @@ float lastFrame = 0.0f;
 
 // capturing mouse input
 bool firstMouse = true;
-float lastX, lastY;
-float mouseSensitivity = 0.1f;
+double lastX, lastY;
 
 float vertices[] = {
     -0.5f, -0.5f, -0.5f, 0.0f, 0.0f,
@@ -157,7 +153,7 @@ int main()
     // create shader
     Shader basicShader(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
 
-    glm::vec3 cubePositions[10000];
+    glm::vec3 cubePositions[20];
 
     float texCoords[] = {0.0f, 0.0f, 1.0f, 0.0f, 0.5f, 1.0f};
 
@@ -261,14 +257,17 @@ int main()
     basicShader.setInt("texture1", 0);
     basicShader.setInt("texture2", 1);
 
+
+
     glEnable(GL_DEPTH_TEST);
     // fps inputs
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    //glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     while (!glfwWindowShouldClose(window))
     {
-
+        processInput(window);
         // calculate delta time
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
@@ -278,22 +277,6 @@ int main()
 
         // input
         // -----
-        glm::vec3 direction;
-        direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-        direction.y = sin(glm::radians(pitch));
-        direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-
-        processInput(window);
-        glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
-        const float cameraSpeed = 5.0f * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-            cameraPos += cameraSpeed * cameraFront;
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-            cameraPos -= cameraSpeed * cameraFront;
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-            cameraPos -= cameraSpeed * cameraRight;
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-            cameraPos += cameraSpeed * cameraRight;
 
         // matrices
 
@@ -307,13 +290,11 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        glm::mat4 view;
-        // makes a matrix to display everything from a camera point facing a direction
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
         // matrix for projection to screen
         glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(CAM_FOV), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
+        glm::mat4 view = basicFlyCamera.GetViewMatrix();
 
         basicShader.setMat4("view", view);
         basicShader.setMat4("projection", projection);
@@ -325,7 +306,7 @@ int main()
             // model matrix
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            model = glm::rotate(model, (float)(glm::pi<float>() * (float)sin((glfwGetTime() * rotSpeed) * 2 * glm::pi<float>())), glm::vec3(1.0f, 0.3f, 0.5f));
+            model = glm::rotate(model, (float)(glm::pi<float>() * (float)sin((glfwGetTime() * 0.3) * 2 * glm::pi<float>())), glm::vec3(1.0f, 0.3f, 0.5f));
 
             basicShader.setMat4("model", model);
 
@@ -357,7 +338,17 @@ void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        basicFlyCamera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        basicFlyCamera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        basicFlyCamera.ProcessKeyboard(LEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        basicFlyCamera.ProcessKeyboard(RIGHT, deltaTime);
 }
+
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -368,9 +359,11 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-
-void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
     if (firstMouse)
     {
         lastX = xpos;
@@ -379,18 +372,17 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos)
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = ypos - lastY;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
     lastX = xpos;
     lastY = ypos;
 
-    xoffset*= mouseSensitivity;
-    yoffset*= mouseSensitivity;
+    basicFlyCamera.ProcessMouseMovement(xoffset, yoffset);
+}
 
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if(pitch > 89.0f)
-        pitch = 89.0f;
-    if(pitch < -89.0f)
-        pitch = -89.0f;
+// glfw: whenever the mouse scroll wheel scrolls, this callback is called
+// ----------------------------------------------------------------------
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    basicFlyCamera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
