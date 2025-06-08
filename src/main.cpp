@@ -18,8 +18,8 @@
 #include "usefulMath.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
-void drawSpaceship(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
+void processInput(GLFWwindow *window, float delta);
+void drawSpaceship();
 void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale);
 
 // settings
@@ -34,15 +34,19 @@ std::string astroidTexturePath;
 
 flyCamera basicFlyCamera(glm::vec3(0.0f, 0.0f, 3.0f));
 
-Shader* basicShader = nullptr;
+Shader *basicShader = nullptr;
 
 //
 glm::vec3 shipPos(0.0f, 0.0f, 0.0f);
 glm::vec3 shipRot(0.0f, 0.0f, 0.0f);
-float shipSpeed = 1.0f;
+glm::vec3 smoothInput(0.0f);
+float shipSpeed = 4.0f;
+float shipAccelAlpha = 2.0f;
+
+glm::mat4 ship(1.0f);
 
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
-void scroll_callback(GLFWwindow * window, double xoffset, double yoffset);
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 
 // calculate delta time
 float deltaTime = 0.0f;
@@ -165,15 +169,17 @@ int main()
 
     float texCoords[] = {0.0f, 0.0f, 1.0f, 0.0f, 0.5f, 1.0f};
 
-    
-    glm::vec3 cubePositions[1];
-    /*
+    glm::vec3 cubePositions[50];
+    glm::vec3 cubeRotationAxis[50];
+    glm::vec3 cubeScale[50];
+
     for (unsigned int i = 0; i < sizeof(cubePositions) / sizeof(cubePositions[0]); i++)
     {
 
-        cubePositions[i] = glm::vec3((float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 8.0f, (float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 8.0f, (float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 8.0f);
+        cubePositions[i] = glm::vec3((float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 30.0f, (float)(((float)(rand() % 1000) / 1000.0f) - 0.5f) * 30.0f, (float)((float)(rand() % 1000) / 1000.0f) * -50.0f);
+        cubeRotationAxis[i] = glm::normalize(glm::vec3((float)(((float)(rand() % 1000) / 1000.0f) - 0.5f), (float)(((float)(rand() % 1000) / 1000.0f) - 0.5f), (float)(((float)(rand() % 1000) / 1000.0f) - 0.5f)));
+        cubeScale[i] = glm::vec3((float)(((float)(rand() % 1000) / 1000.0f) / 2 + 0.5 ), (float)(((float)(rand() % 1000) / 1000.0f) / 2 + 0.5 ), (float)(((float)(rand() % 1000) / 1000.0f) / 2 + 0.5 ));
     }
-    */
 
     // this just choses what to do when the texture overflows when drawing on a triangle
     // S and T respond to the X and Y axis of the texture
@@ -269,12 +275,10 @@ int main()
     basicShader->setInt("texture1", 0);
     basicShader->setInt("texture2", 1);
 
-
-
     glEnable(GL_DEPTH_TEST);
     // fps inputs
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    //glfwSetCursorPosCallback(window, mouse_callback);
+    // glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
     shipPos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -282,13 +286,12 @@ int main()
 
     while (!glfwWindowShouldClose(window))
     {
-        processInput(window);
         // calculate delta time
         float currentFrame = (float)glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        std::cout << deltaTime << std::endl;
+        processInput(window, deltaTime);
 
         // input
         // -----
@@ -308,39 +311,56 @@ int main()
         // matrix for projection to screen
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(CAM_FOV), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        
-        glm::vec3 camPos = shipPos + glm::vec3(0.0f, 1.0f, 3.0f);
 
-        basicFlyCamera.Position = VecLerp(basicFlyCamera.Position, camPos, 0.99 * deltaTime);
-        glm::mat4 view = basicFlyCamera.GetLookAtMatrix(shipPos);
+        glm::vec3 camPos = shipPos + glm::vec3(0.0f, 2.0f, 3.0f);
+
+        basicFlyCamera.Position = VecLerp(basicFlyCamera.Position, camPos, 4 * deltaTime);
+        glm::mat4 view = basicFlyCamera.GetLookAtMatrix(shipPos + glm::vec3(0.0f, 0.0f, -5.0f));
 
         basicShader->setMat4("view", view);
         basicShader->setMat4("projection", projection);
 
         glBindVertexArray(VAO);
-        /*
-        // gl draw elements requires a indeci
+
+        ship = glm::mat4(1.0f);
+
+        basicShader->setFloat("textureSet", 1.0f);
+        basicShader->setMat4("ship", ship);
+        //modelDraw(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+
         for (unsigned int i = 0; i < sizeof(cubePositions) / sizeof(cubePositions[0]); i++)
         {
             // model matrix
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            model = glm::rotate(model, (float)(glm::pi<float>() * (float)sin((glfwGetTime() * 0.3) * 2 * glm::pi<float>())), glm::vec3(1.0f, 0.3f, 0.5f));
+            model = glm::rotate(model,  (float)glfwGetTime() * 6, cubeRotationAxis[i]);
+            model = glm::scale(model, cubeScale[i] * 2.0f);
+
+            cubePositions[i].z += 18 * deltaTime;
+
+            if(cubePositions[i].z > 4) {
+                cubePositions[i].z = -60;
+            }
 
             basicShader->setMat4("model", model);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
-        */
-        glm::mat4 ship(1.0f);
+
+        shipRot.z = fLerp(shipRot.z, -smoothInput.x * 900, 8 * deltaTime);
+        shipRot.x = fLerp(shipRot.x, smoothInput.y * 900, 8 * deltaTime);
+
+        ship = glm::translate(ship, shipPos);
+        ship = glm::rotate(ship, glm::radians(shipRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+        ship = glm::rotate(ship, glm::radians(shipRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+        ship = glm::rotate(ship, glm::radians(shipRot.z), glm::vec3(0.0f, 0.0f, 1.0f));
+        ship = glm::scale(ship, glm::vec3(1.0f, 1.0f, 1.0f));
         basicShader->setMat4("ship", ship);
-        basicShader->setFloat("textureSet", 1.0f);
-        modelDraw(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
-        drawSpaceship(shipPos, shipRot, glm::vec3(1.0f, 1.0f, 1.0f));
+        drawSpaceship();
 
-        //shipRot.z = 45.0f * glm::sin(glfwGetTime() / 2);
-        // glBindVertexArray(0); // no need to unbind it every time
+        // shipRot.z = 45.0f * glm::sin(glfwGetTime() / 2);
+        //  glBindVertexArray(0); // no need to unbind it every time
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -362,21 +382,30 @@ int main()
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window)
+void processInput(GLFWwindow *window, float delta)
 {
+    glm::vec3 shipInputAxis(0.0f, 0.0f, 0.0f);
+
+    // shipInputAxis = VecLerp(shipInputAxis, glm::vec3(0.0f, 0.0f, 0.0f), shipAccelAlpha * delta);
+
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        shipPos.y += shipSpeed * deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        shipPos.y -= shipSpeed * deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        shipPos.x -= shipSpeed * deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        shipPos.x += shipSpeed * deltaTime;
-}
+    shipInputAxis = glm::vec3(0.0f);
 
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        shipInputAxis.y = 1 * shipSpeed * delta;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        shipInputAxis.y = -1 * shipSpeed * delta;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        shipInputAxis.x = -1 * shipSpeed * delta;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        shipInputAxis.x = 1 * shipSpeed * delta;
+
+    smoothInput = VecLerp(smoothInput, shipInputAxis, shipAccelAlpha * delta);
+
+    shipPos += smoothInput;
+}
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -389,12 +418,13 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
     basicFlyCamera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 
-void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
+void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale)
+{
 
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, position);
@@ -408,28 +438,18 @@ void modelDraw(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
     glDrawArrays(GL_TRIANGLES, 0, 36);
 }
 
-void drawSpaceship(glm::vec3 position, glm::vec3 rotation, glm::vec3 scale) {
-    //modelDraw(position + glm::vec3(0.0f, 0.0f, 0.0f), rotation + glm::vec3(0.0f, 0.0f, 0.0f), scale + glm::vec3(1.0f, 1.0f, 1.0f));
+void drawSpaceship()
+{
+    // modelDraw(position + glm::vec3(0.0f, 0.0f, 0.0f), rotation + glm::vec3(0.0f, 0.0f, 0.0f), scale + glm::vec3(1.0f, 1.0f, 1.0f));
     basicShader->setFloat("textureSet", 0.0f);
-
-    glm::mat4 ship(1.0f);
 
     modelDraw(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.7f, 0.5f, 1.3f));
     modelDraw(glm::vec3(0.0f, 0.0f, -0.6f), glm::vec3(0.0f, 45.0f, 0.0f), glm::vec3(0.8f, 0.3f, 0.8f));
-    //wings
-    modelDraw(glm::vec3(0.3f, -0.1f, 0.0f), glm::vec3(0.0f, 20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
-    modelDraw(glm::vec3(-0.3f,-0.1f, 0.0f), glm::vec3(0.0f, -20.0f, 0.0f), scale + glm::vec3(0.0f, -0.85f, 0.0f));
+    // wings
+    modelDraw(glm::vec3(0.3f, -0.1f, 0.0f), glm::vec3(0.0f, 20.0f, 0.0f), glm::vec3(1.0f, 0.15f, 1.0f));
+    modelDraw(glm::vec3(-0.3f, -0.1f, 0.0f), glm::vec3(0.0f, -20.0f, 0.0f), glm::vec3(1.0f, 0.15f, 1.0f));
 
-    //thrusters
+    // thrusters
     modelDraw(glm::vec3(0.2f, 0.0f, 0.7f), glm::vec3(0.0f, 0.0f, 45.0f), glm::vec3(0.3f, 0.3f, 0.3f));
     modelDraw(glm::vec3(-0.2f, 0.0f, 0.7f), glm::vec3(0.0f, 0.0f, 45.0f), glm::vec3(0.3f, 0.3f, 0.3f));
-
-    ship = glm::translate(ship, position);
-    ship = glm::rotate(ship, glm::radians(rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
-    ship = glm::rotate(ship, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
-    ship = glm::rotate(ship, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-    ship = glm::scale(ship, scale);
-
-    basicShader->setMat4("ship", ship);
 }
-
