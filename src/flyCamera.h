@@ -14,7 +14,7 @@ enum Camera_Movement {
 
 const float CAM_YAW = -90.0f;
 const float CAM_PITCH = 0.0f;
-const float CAM_MOVMENTSPEED = 5.0f;
+const float CAM_MOVEMENTSPEED = 5.0f;
 const float CAM_FOV = 90.0f;
 const float CAM_ZOOMSPEED = 5.0f;
 const float CAM_MOUSESENSITIVITY = 0.1f;
@@ -36,7 +36,7 @@ public:
     float MouseSensitivity;
     float Zoom;
 
-    flyCamera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = CAM_YAW, float pitch = CAM_PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(CAM_MOVMENTSPEED), MouseSensitivity(CAM_MOUSESENSITIVITY), Zoom(CAM_ZOOMSPEED)
+    flyCamera(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = CAM_YAW, float pitch = CAM_PITCH) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(CAM_MOVEMENTSPEED), MouseSensitivity(CAM_MOUSESENSITIVITY), Zoom(CAM_ZOOMSPEED)
     {
         Position = position;
         WorldUp = up;
@@ -46,7 +46,7 @@ public:
     }
 
     // constructor with scalar values
-    flyCamera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(CAM_MOVMENTSPEED), MouseSensitivity(CAM_MOUSESENSITIVITY), Zoom(CAM_ZOOMSPEED)
+    flyCamera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(CAM_MOVEMENTSPEED), MouseSensitivity(CAM_MOUSESENSITIVITY), Zoom(CAM_ZOOMSPEED)
     {
         Position = glm::vec3(posX, posY, posZ);
         WorldUp = glm::vec3(upX, upY, upZ);
