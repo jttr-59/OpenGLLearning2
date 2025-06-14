@@ -46,8 +46,8 @@ float lastFrame = 0.0f;
 
 // lighting
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-float ambientLight = 0.1f;
-float specularLight = 0.5f;
+float lightAmbientPower = 0.2f;
+float lightDiffusePower = 0.5f;
 
 // capturing mouse input
 bool firstMouse = true;
@@ -323,6 +323,8 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
+    glm::vec3 lightColor = glm::vec3(1.0f, 0.0f, 0.0f);
+
     while (!glfwWindowShouldClose(window))
     {
         // calculate delta time
@@ -338,16 +340,34 @@ int main()
 
         // render
         // ------
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        glm::vec3 lightDiffuse = lightColor * glm::vec3(lightDiffusePower);
+        glm::vec3 lightAmbient = lightDiffuse * glm::vec3(lightAmbientPower);
+
+        //lightColor.r = sin(glfwGetTime());
+
+
 
         litShader.use();
         litShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
         litShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-        litShader.setVec3("lightPos", lightPos);
+
+        litShader.setVec3("light.position", lightPos);
+        litShader.setVec3("light.ambient", lightAmbient);
+        litShader.setVec3("light.diffuse", lightDiffuse);
+        litShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+
         litShader.setVec3("viewPos", basicFlyCamera.Position);
-        litShader.setFloat("ambientStrength", ambientLight);
-        litShader.setFloat("specularStrength", specularLight);
+
+        litShader.setVec3("material.ambient", glm::vec3(1.0f, 0.5f, 0.31f));
+        litShader.setVec3("material.diffuse", glm::vec3(1.0f, 0.5f, 0.31f));
+        litShader.setVec3("material.specular", glm::vec3(0.5f, 0.5f, 0.5f));
+        litShader.setFloat("material.shininess", 32.0f);
+
+        //litShader.setFloat("ambientStrength", ambientLight);
+        //litShader.setFloat("specularStrength", specularLight);
 
         lightPos.z = 2 * sin(glfwGetTime());
 
@@ -392,8 +412,12 @@ int main()
 
         // ImGui widgets
         ImGui::Begin("Debug");
-        ImGui::SliderFloat("Ambient Light Strength", &ambientLight, 0.0f, 1.0f);
-        ImGui::SliderFloat("Specular Light Strength", &specularLight, 0.0f, 1.0f);
+        ImGui::SliderFloat("Light Red Value", &lightColor.r, 0.0f, 1.0f);
+        ImGui::SliderFloat("Light green Value", &lightColor.g, 0.0f, 1.0f);
+        ImGui::SliderFloat("Light blue Value", &lightColor.b, 0.0f, 1.0f);
+        ImGui::SeparatorText("Light Power");
+        ImGui::SliderFloat("Light Diffuse Intensity", &lightDiffusePower, 0.0f, 5.0f);
+        ImGui::SliderFloat("Light Ambient Intensity", &lightAmbientPower, 0.0f, 1.0f);
         ImGui::End();
 
         // Render ImGui
