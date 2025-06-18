@@ -103,7 +103,7 @@ float vertices[] = {
 // };
 // set up vertex data (and buffer(s)) and configure vertex attributes
 // ------------------------------------------------------------------
-/*
+
 glm::vec3 cubePositions[] = {
     glm::vec3(0.0f, 0.0f, 0.0f),
     glm::vec3(2.0f, 5.0f, -15.0f),
@@ -116,7 +116,6 @@ glm::vec3 cubePositions[] = {
     glm::vec3(1.5f, 0.2f, -1.5f),
     glm::vec3(-1.3f, 1.0f, -1.5f)};
 
-*/
 std::string vertexShaderPath;
 std::string fragmentShaderPath;
 
@@ -286,7 +285,9 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    glm::vec3 lightColor = glm::vec3(1.0f, 0.0f, 0.0f);
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -317,7 +318,16 @@ int main()
         litShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
         litShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
-        litShader.setVec3("light.position", lightPos);
+        litShader.setFloat("light.constant",  1.0f);
+        litShader.setFloat("light.linear",    0.09f);
+        litShader.setFloat("light.quadratic", 0.032f);
+
+        litShader.setVec3("light.position", basicFlyCamera.Position);
+        litShader.setVec3("light.direction", basicFlyCamera.Front);
+        //using cosine makes calculations easier
+        litShader.setFloat("light.cutOff", glm::cos(glm::radians(20.0f)));
+        litShader.setFloat("light.outerCutOff", glm::cos(glm::radians(30.0f)));
+
         litShader.setVec3("light.ambient", lightAmbient);
         litShader.setVec3("light.diffuse", lightDiffuse);
         litShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -336,7 +346,7 @@ int main()
         //litShader.setFloat("ambientStrength", ambientLight);
         //litShader.setFloat("specularStrength", specularLight);
 
-        lightPos.z = 2 * sin(glfwGetTime());
+        lightPos.z = 2.0 * sin(glfwGetTime());
 
         // matrix for projection to screen
         float aspect = (float)currentWidth / (float)currentHeight;
@@ -349,13 +359,17 @@ int main()
         litShader.setMat4("projection", projection);
         litShader.setMat4("view", view);
 
+
+        for(unsigned int i = 0; i < 10; i++) {
         glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, cubePositions[i]);
         //model = glm::scale(model, glm::vec3(30.0f, 1.0f, 1.0f));
         litShader.setMat4("model", model);
         litShader.setMat3("normalWorld", glm::mat3(glm::transpose(glm::inverse(model))));
 
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
         // gl draw elements requires a indeci
 
         // LIGHT SHADER DRAWING
@@ -364,7 +378,7 @@ int main()
         lightCubeShader.setMat4("projection", projection);
         lightCubeShader.setMat4("view", view);
 
-        model = glm::mat4(1.0f);
+        glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, lightPos);
         model = glm::scale(model, glm::vec3(0.2f));
         lightCubeShader.setMat4("model", model);
@@ -374,11 +388,12 @@ int main()
 
                         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
-
         // Start new ImGui frame
 
         // ImGui widgets
         ImGui::Begin("Debug");
+        ImGui::Text(std::to_string((int)(1.0f/deltaTime)).c_str());
+        ImGui::SeparatorText("Light Debug");
         ImGui::SliderFloat("Light Red Value", &lightColor.r, 0.0f, 1.0f);
         ImGui::SliderFloat("Light green Value", &lightColor.g, 0.0f, 1.0f);
         ImGui::SliderFloat("Light blue Value", &lightColor.b, 0.0f, 1.0f);

@@ -11,10 +11,17 @@ in vec2 TexCoords;
 
 struct Light {
     vec3 position;
+    vec3 direction;
     
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    float cutOff;
+    float outerCutOff;
+    float constant;
+    float linear;
+    float quadratic;
 };
 
 uniform Material material;
@@ -41,6 +48,21 @@ void main()
     vec3 reflectionDir = reflect(-lightDir, norm);
     float spec = pow(max(dot(viewDir, reflectionDir), 0.01), material.shininess);
     vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+
+    float distance = length(light.position - FragPos);
+    float attuenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
+
+    float theta = dot(lightDir, normalize(-light.direction));
+    float epsilon = light.cutOff - light.outerCutOff;
+    float intensity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);
+
+    diffuse *= intensity;
+    specular *= intensity;
+
+    ambient *= attuenuation;
+    diffuse *= attuenuation;
+    specular *= attuenuation;
+
 
     FragColor = vec4(ambient + diffuse + specular, 1.0);
 }
