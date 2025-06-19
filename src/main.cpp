@@ -19,6 +19,8 @@
 #include "shader.h"
 #include "stb_image.h"
 #include "flyCamera.h"
+#include "directionalLight.h"
+#include "pointLight.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -134,7 +136,7 @@ int main()
     lightFragmentShaderPath = "../shaders/lightFragment.glsl";
     lightVertexShaderPath = "../shaders/lightVertex.glsl";
 
-    crateDiffuseTexturePath = "../textures/container2.png";
+    crateDiffuseTexturePath = "../textures/oak_veneer_01_diff_4k.jpg";
     createSpecularTexturePath = "../textures/container2_specular.png";
 #elif defined(__APPLE__) || defined(__unix__)
     vertexShaderPath = "./shaders/vertexShader.glsl";
@@ -285,9 +287,14 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+    DirectionalLight dirLight(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f));
+    PointLight pointLight1(glm::vec3( 0.7f,  0.2f,  2.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight2(glm::vec3( 2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight3(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight4(glm::vec3( 0.0f,  0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
 
-
+    litShader.use();
+    dirLight.addLight(litShader, 0); 
 
     while (!glfwWindowShouldClose(window))
     {
@@ -307,30 +314,21 @@ int main()
         glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::vec3 lightDiffuse = lightColor * glm::vec3(lightDiffusePower);
-        glm::vec3 lightAmbient = lightDiffuse * glm::vec3(lightAmbientPower);
-
-        //lightColor.r = sin(glfwGetTime());
-
-
-
         litShader.use();
-        litShader.setVec3("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-        litShader.setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-
-        litShader.setFloat("light.constant",  1.0f);
-        litShader.setFloat("light.linear",    0.09f);
-        litShader.setFloat("light.quadratic", 0.032f);
-
-        litShader.setVec3("light.position", basicFlyCamera.Position);
-        litShader.setVec3("light.direction", basicFlyCamera.Front);
+        pointLight1.addLight(litShader, 0);
+        pointLight2.addLight(litShader, 1);
+        pointLight3.addLight(litShader, 2);
+        pointLight4.addLight(litShader, 3);
+        
+        pointLight1.Position.x = (float)sin(glfwGetTime());
+        pointLight2.Position.x = (float)cos(glfwGetTime());
+        pointLight3.Position.x = (float)sin(glfwGetTime());
+        pointLight4.Position.x = (float)cos(glfwGetTime());
+        /*
         //using cosine makes calculations easier
         litShader.setFloat("light.cutOff", glm::cos(glm::radians(20.0f)));
         litShader.setFloat("light.outerCutOff", glm::cos(glm::radians(30.0f)));
-
-        litShader.setVec3("light.ambient", lightAmbient);
-        litShader.setVec3("light.diffuse", lightDiffuse);
-        litShader.setVec3("light.specular", glm::vec3(1.0f, 1.0f, 1.0f));
+        */
 
         litShader.setVec3("viewPos", basicFlyCamera.Position);
 
@@ -346,7 +344,7 @@ int main()
         //litShader.setFloat("ambientStrength", ambientLight);
         //litShader.setFloat("specularStrength", specularLight);
 
-        lightPos.z = 2.0 * sin(glfwGetTime());
+        lightPos.z = 2.0f * (float)sin(glfwGetTime());
 
         // matrix for projection to screen
         float aspect = (float)currentWidth / (float)currentHeight;
@@ -370,21 +368,13 @@ int main()
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+        pointLight1.drawLightCube(lightCubeShader, projection, view, lightVAO);
+        pointLight2.drawLightCube(lightCubeShader, projection, view, lightVAO);
+        pointLight3.drawLightCube(lightCubeShader, projection, view, lightVAO);
+        pointLight4.drawLightCube(lightCubeShader, projection, view, lightVAO);
         // gl draw elements requires a indeci
 
         // LIGHT SHADER DRAWING
-        lightCubeShader.use();
-
-        lightCubeShader.setMat4("projection", projection);
-        lightCubeShader.setMat4("view", view);
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f));
-        lightCubeShader.setMat4("model", model);
-
-        glBindVertexArray(lightVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
 
                         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -394,9 +384,9 @@ int main()
         ImGui::Begin("Debug");
         ImGui::Text(std::to_string((int)(1.0f/deltaTime)).c_str());
         ImGui::SeparatorText("Light Debug");
-        ImGui::SliderFloat("Light Red Value", &lightColor.r, 0.0f, 1.0f);
-        ImGui::SliderFloat("Light green Value", &lightColor.g, 0.0f, 1.0f);
-        ImGui::SliderFloat("Light blue Value", &lightColor.b, 0.0f, 1.0f);
+        //ImGui::SliderFloat("Light Red Value", &lightColor.r, 0.0f, 1.0f);
+        //ImGui::SliderFloat("Light green Value", &lightColor.g, 0.0f, 1.0f);
+        //ImGui::SliderFloat("Light blue Value", &lightColor.b, 0.0f, 1.0f);
         ImGui::SeparatorText("Light Power");
         ImGui::SliderFloat("Light Diffuse Intensity", &lightDiffusePower, 0.0f, 5.0f);
         ImGui::SliderFloat("Light Ambient Intensity", &lightAmbientPower, 0.0f, 1.0f);
@@ -496,8 +486,8 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    float xoffset = (float)(xpos - lastX);
+    float yoffset = (float)(lastY - ypos); // reversed since y-coordinates go from bottom to top
 
     lastX = xpos;
     lastY = ypos;
