@@ -9,6 +9,7 @@ set(IMGUI_BACKENDS_DIR ${IMGUI_DIR}/backends)
 
 # Add GLFW as a CMake subproject
 add_subdirectory(include/glfw)
+add_subdirectory(include/assimp)
 
 add_executable(Learning2
     src/main.cpp
@@ -39,6 +40,7 @@ target_include_directories(Learning2 PRIVATE
     ${PROJECT_SOURCE_DIR}/include/imgui        # ImGui core
     ${PROJECT_SOURCE_DIR}/include/imgui/backends # ImGui GLFW/OpenGL backends
     ${PROJECT_SOURCE_DIR}/include/glfw/include # GLFW public headers
+    ${PROJECT_SOURCE_DIR}/include/assimp/include
 )
 
 # Set output paths based on build directory
@@ -48,6 +50,7 @@ if(WIN32)
     target_link_libraries(Learning2 PRIVATE
         glfw
         imgui
+        assimp
         opengl32         # Windows
 
     )   
@@ -58,6 +61,7 @@ elseif(APPLE)
     target_link_libraries(Learning2 PRIVATE
         glfw
         imgui
+        assimp
         ${OpenGL_LIBRARY}
         ${COCOA_LIBRARY}
     )
@@ -66,6 +70,7 @@ elseif(UNIX)
     target_link_libraries(Learning2 PRIVATE
         glfw
         imgui
+        assimp
         OpenGL::GL      # UNIX
     ) 
 endif()
@@ -103,5 +108,26 @@ foreach(TEXTURE_FILE ${TEXTURE_FILES})
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 ${TEXTURE_FILE}
                 ${CMAKE_BINARY_DIR}/textures/${TEXTURE_NAME}
+    )
+endforeach()
+
+# Recursively gather all files in models and subdirectories
+file(GLOB_RECURSE MODEL_FILES "${CMAKE_SOURCE_DIR}/models/*")
+
+# Create a custom target for copying
+add_custom_target(copy_models ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/models
+)
+
+# Loop over all model files
+foreach(MODEL_FILE ${MODEL_FILES})
+    # Get relative path to preserve folder structure
+    file(RELATIVE_PATH REL_PATH "${CMAKE_SOURCE_DIR}/models" "${MODEL_FILE}")
+    set(DEST_PATH "${CMAKE_BINARY_DIR}/models/${REL_PATH}")
+
+    add_custom_command(
+        TARGET copy_models POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<IF:$<BOOL:${REL_PATH}>,${CMAKE_BINARY_DIR}/models/$<TARGET_PROPERTY:NAME>,${CMAKE_BINARY_DIR}/models>"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${MODEL_FILE}" "${DEST_PATH}"
     )
 endforeach()

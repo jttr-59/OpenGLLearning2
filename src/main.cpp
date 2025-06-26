@@ -21,6 +21,7 @@
 #include "flyCamera.h"
 #include "directionalLight.h"
 #include "pointLight.h"
+#include "model.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -127,6 +128,8 @@ std::string lightVertexShaderPath;
 std::string crateDiffuseTexturePath;
 std::string createSpecularTexturePath;
 
+std::string backpackModelPath;
+
 int main()
 {
 #ifdef _WIN32
@@ -138,6 +141,8 @@ int main()
 
     crateDiffuseTexturePath = "../textures/oak_veneer_01_diff_4k.jpg";
     createSpecularTexturePath = "../textures/container2_specular.png";
+
+    backpackModelPath = "../models/backpack/backpack.obj";
 #elif defined(__APPLE__) || defined(__unix__)
     vertexShaderPath = "./shaders/vertexShader.glsl";
     fragmentShaderPath = "./shaders/fragmentShader.glsl";
@@ -147,6 +152,8 @@ int main()
 
     crateDiffuseTexturePath = "./textures/container2.png";
     createSpecularTexturePath = "./textures/container2_specular.png";
+
+    backpackModelPath = "./models/backpack/backpack.obj";
 #else
 #error "Unsupported platform"
 #endif
@@ -160,6 +167,12 @@ int main()
 
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+#ifdef NDEBUG
+    std::cout << "Running in RELEASE mode" << std::endl;
+#else
+    std::cout << "Running in DEBUG mode" << std::endl;
 #endif
 
     // glfw window creation
@@ -288,10 +301,12 @@ int main()
     ImGui_ImplOpenGL3_Init("#version 330");
 
     DirectionalLight dirLight(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f));
-    PointLight pointLight1(glm::vec3( 0.7f,  0.2f,  2.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
-    PointLight pointLight2(glm::vec3( 2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
-    PointLight pointLight3(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
-    PointLight pointLight4(glm::vec3( 0.0f,  0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(3.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight1(glm::vec3( 0.7f,  0.2f,  2.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight2(glm::vec3( 2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight3(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight4(glm::vec3( 0.0f,  0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+
+    Model backpackModel(backpackModelPath);
 
     litShader.use();
     dirLight.addLight(litShader, 0); 
@@ -368,6 +383,14 @@ int main()
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
         }
+
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // adjust position
+        model = glm::scale(model, glm::vec3(1.0f)); // scale up or down if needed
+        litShader.setMat4("model", model);
+        litShader.setMat3("normalWorld", glm::mat3(glm::transpose(glm::inverse(model))));
+        backpackModel.Draw(litShader);
+
         pointLight1.drawLightCube(lightCubeShader, projection, view, lightVAO);
         pointLight2.drawLightCube(lightCubeShader, projection, view, lightVAO);
         pointLight3.drawLightCube(lightCubeShader, projection, view, lightVAO);
