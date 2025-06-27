@@ -301,15 +301,15 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
 
-    DirectionalLight dirLight(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.1f), glm::vec3(0.1f), glm::vec3(1.0f));
-    PointLight pointLight1(glm::vec3( 0.7f,  0.2f,  2.0f), glm::vec3(0.1f), glm::vec3(0.1f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
-    PointLight pointLight2(glm::vec3( 2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(0.1f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
-    PointLight pointLight3(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(0.1f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
-    PointLight pointLight4(glm::vec3( 0.0f,  0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(0.1f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    DirectionalLight dirLight(glm::vec3(-1.0f, -1.0f, -1.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f));
+    PointLight pointLight1(glm::vec3( 0.7f,  0.2f,  2.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight2(glm::vec3( 2.3f, -3.3f, -4.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight3(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
+    PointLight pointLight4(glm::vec3( 0.0f,  0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
 
     SpotLight spotLight1(glm::vec3( 1.0f,  0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f, glm::vec2(12.0f, 18.0f));
 
-    //Model backpackModel(backpackModelPath);
+    Model backpackModel(backpackModelPath);
 
     litShader.use();
     dirLight.addLight(litShader, 0); 
@@ -397,7 +397,7 @@ int main()
         model = glm::scale(model, glm::vec3(1.0f)); // scale up or down if needed
         litShader.setMat4("model", model);
         litShader.setMat3("normalWorld", glm::mat3(glm::transpose(glm::inverse(model))));
-        //backpackModel.Draw(litShader);
+        backpackModel.Draw(litShader);
 
         pointLight1.drawLightCube(lightCubeShader, projection, view, lightVAO);
         pointLight2.drawLightCube(lightCubeShader, projection, view, lightVAO);
