@@ -42,7 +42,7 @@ public:
 
         litShader.setVec3("pointLights[" + std::to_string(lightNum) + "].ambient", Ambient);
         litShader.setVec3("pointLights[" + std::to_string(lightNum) + "].diffuse", Diffuse);
-        litShader.setVec3("pointLights[" + std::to_string(lightNum) + "].Specular", Specular);
+        litShader.setVec3("pointLights[" + std::to_string(lightNum) + "].specular", Specular);
 
         litShader.setFloat("pointLights[" + std::to_string(lightNum) + "].constant", Constant);
         litShader.setFloat("pointLights[" + std::to_string(lightNum) + "].linear", Linear);

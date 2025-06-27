@@ -33,7 +33,7 @@ class DirectionalLight
 
         litShader.setVec3("dirLights[" + std::to_string(lightNum) + "].ambient", Ambient);
         litShader.setVec3("dirLights[" + std::to_string(lightNum) + "].diffuse", Diffuse);
-        litShader.setVec3("dirLights[" + std::to_string(lightNum) + "].Specular", Specular);
+        litShader.setVec3("dirLights[" + std::to_string(lightNum) + "].specular", Specular);
     }
 };
 
