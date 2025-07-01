@@ -23,6 +23,7 @@
 #include "pointLight.h"
 #include "model.h"
 #include "spotLight.h"
+#include "voxelmesh.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -126,8 +127,8 @@ std::string fragmentShaderPath;
 std::string lightFragmentShaderPath;
 std::string lightVertexShaderPath;
 
-std::string crateDiffuseTexturePath;
-std::string createSpecularTexturePath;
+std::string voxelDiffuseTexturePath;
+std::string voxelSpecularTexturePath;
 
 std::string backpackModelPath;
 
@@ -140,8 +141,8 @@ int main()
     lightFragmentShaderPath = "../shaders/lightFragment.glsl";
     lightVertexShaderPath = "../shaders/lightVertex.glsl";
 
-    crateDiffuseTexturePath = "../textures/oak_veneer_01_diff_4k.jpg";
-    createSpecularTexturePath = "../textures/container2_specular.png";
+    voxelDiffuseTexturePath = "../textures/astroidL.png";
+    voxelSpecularTexturePath = "../textures/astroidL.png";
 
     backpackModelPath = "../models/backpack/backpack.obj";
 #elif defined(__APPLE__) || defined(__unix__)
@@ -229,8 +230,8 @@ int main()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    unsigned int diffuseMap = loadTexture(crateDiffuseTexturePath.c_str());
-    unsigned int specularMap = loadTexture(createSpecularTexturePath.c_str());
+    unsigned int diffuseMap = loadTexture(voxelDiffuseTexturePath.c_str());
+    unsigned int specularMap = loadTexture(voxelSpecularTexturePath.c_str());
 
     unsigned int VBO, cubeVAO;
     glGenVertexArrays(1, &cubeVAO);
@@ -307,12 +308,23 @@ int main()
     PointLight pointLight3(glm::vec3(-4.0f,  2.0f, -12.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
     PointLight pointLight4(glm::vec3( 0.0f,  0.0f, -3.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f);
 
-    SpotLight spotLight1(glm::vec3( 1.0f,  0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.1f), glm::vec3(1.0f), glm::vec3(1.0f), 1.0f, 0.09f, 0.032f, glm::vec2(12.0f, 18.0f));
+    SpotLight spotLight1(glm::vec3( 1.0f,  0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.1f), glm::vec3(0.5f), glm::vec3(0.5f), 1.0f, 0.09f, 0.032f, glm::vec2(12.0f, 18.0f));
 
-    Model backpackModel(backpackModelPath);
+
+    VoxelMesh testVoxel;
+
+
 
     litShader.use();
     dirLight.addLight(litShader, 0); 
+
+    for(unsigned int i = 0; i < 10; i++) {
+
+        for(unsigned int j = 0; j < 10; j++) {
+        testVoxel.addVoxel(glm::vec3(j, -2.0f, i));
+        }
+    }
+
 
     while (!glfwWindowShouldClose(window))
     {
@@ -374,30 +386,22 @@ int main()
         //to avoid dividing by zero if tabbed out;
         if (currentHeight == 0 || aspect < 0.001f)
             aspect = 1.0f;
-    
+        
         glm::mat4 projection = glm::perspective(glm::radians(CAM_FOV), aspect, 0.1f, 100.0f);
         glm::mat4 view = basicFlyCamera.GetViewMatrix();
         litShader.setMat4("projection", projection);
         litShader.setMat4("view", view);
 
-
-        for(unsigned int i = 0; i < 10; i++) {
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, cubePositions[i]);
-        //model = glm::scale(model, glm::vec3(30.0f, 1.0f, 1.0f));
-        litShader.setMat4("model", model);
-        litShader.setMat3("normalWorld", glm::mat3(glm::transpose(glm::inverse(model))));
-
+        /*
         glBindVertexArray(cubeVAO);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        glBindVertexArray(0);
+        */
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f)); // adjust position
-        model = glm::scale(model, glm::vec3(1.0f)); // scale up or down if needed
-        litShader.setMat4("model", model);
-        litShader.setMat3("normalWorld", glm::mat3(glm::transpose(glm::inverse(model))));
-        backpackModel.Draw(litShader);
+
+        testVoxel.draw(litShader, view, projection);
+
+
 
         pointLight1.drawLightCube(lightCubeShader, projection, view, lightVAO);
         pointLight2.drawLightCube(lightCubeShader, projection, view, lightVAO);

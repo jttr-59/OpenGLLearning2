@@ -15,6 +15,7 @@ add_executable(Learning2
     src/main.cpp
     src/glad.c
     src/stb_image.cpp
+    src/voxelMesh.cpp
 )
 
 add_library(imgui STATIC
